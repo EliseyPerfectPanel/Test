@@ -28,6 +28,13 @@ class RateController extends Controller
 				'class' =>  HttpBearerAuth::class,
 				'only' => ['index', 'exchange']
 			];
+			$behaviors['verbs'] = [
+				'class' => \yii\filters\VerbFilter::class,
+				'actions' => [
+					'index'  => ['GET'],
+					'rate' => ['POST'],
+				]
+			];
 			return $behaviors;
 		}
 
