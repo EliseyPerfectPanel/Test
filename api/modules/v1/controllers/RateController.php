@@ -2,79 +2,59 @@
 
 namespace api\modules\v1\controllers;
 
+use api\modules\v1\models\BlockchainTicker;
 use yii;
 use yii\rest\Controller;
 use yii\helpers\Html;
-use yii\base\ErrorException;
 use yii\filters\auth\HttpBearerAuth;
+
 
 class RateController extends Controller
 {
-		private $commission     = 2; //-- percents
-		private $defaultResponse = [
+		private $commission         = 2; //-- percents
+		protected $_defaultResponse = [
 			'status'      => 'error',
 			'code'        => 403,
 			'message'     => 'Invalid Token'
 		];
 
-		public function init() {
-			parent::init();
-		}
+
 		public function behaviors()
 		{
-			//-- аутентификатор + ограничение только для 2х методов, остальные на error
 			$behaviors = parent::behaviors();
 			$behaviors['authenticator'] = [
 				'class' =>  HttpBearerAuth::class,
 				'only' => ['index', 'exchange']
 			];
-			$behaviors['verbs'] = [
-				'class' => \yii\filters\VerbFilter::class,
-				'actions' => [
-					'index'  => ['GET'],
-					'rate' => ['POST'],
-				]
-			];
+//			$behaviors['verbs'] = [
+//				'class' => \yii\filters\VerbFilter::class,
+//				'actions' => [
+//					'index'  => ['GET', 'POST'],
+////					'rate' => ['POST'],
+//				]
+//			];
 			return $behaviors;
 		}
 
-		private function tickerRequest(){
-			$request = $this->defaultResponse;
-			try {
-				$data = file_get_contents('https://blockchain.info/ticker');
-				if($data === FALSE){
-					throw new ErrorException('blockchain.info server error!');
-				}
-				$data = json_decode($data, true, 512, JSON_THROW_ON_ERROR);
-				$request = [
-					'status' => 'success',
-					'code'   => 200,
-					'data' => $data
-				];
-			} catch(yii\base\ErrorException $e){
-				$request = [
-					'status'      => 'error',
-					'code'        => 403,
-					'message'     => 'Invalid Token'
-//					'message'     => $e->getMessage()
-				];
-			}
-			catch(\JsonException $e){
-//				$request = [
-//					'status'      => 'error',
-//					'code'        => 403,
-//					'message'     => 'Json Syntax Error'
-//				];
-			}
-			return $request;
-		}
 		//-- конвертнем сразу весь массив, не ну а чо
 		private function convertByCommission(&$data = []){
 			foreach ($data as &$item){
 				$item = number_format($item['buy'] + ($item['buy']*($this->commission/100)), 2, '.', '');
 			}
 		}
-		public function actionIndex($currency = ''){
+		public function actionIndex($method){
+			$request = Yii::$app->request;
+
+			var_dump($method);
+			echo '</br>';
+			var_dump($request->method);exit;
+
+
+			if($method == 'convert'){
+			}
+
+
+
 			$currency = Html::encode($currency);
 			//-- тут бы еще регулярочкой подчистить все кроме "," и "A-Z"
 			if(strlen($currency)>=3){
@@ -86,10 +66,21 @@ class RateController extends Controller
 				$currency = '';
 			}
 
-			$request = $this->tickerRequest();
-			if($request['code'] != 200){
-				return $request;
+			//-- отправляем запрос + валидация json и его структуры
+			try {
+				$bct = new BlockchainTicker();
+				$response = $bct->createRequest()
+					->setMethod('GET')
+					->setUrl('https://blockchain.info/ticker')
+					->send();
+
+
+			} catch (yii\httpclient\Exception $e) {
+				var_dump($e);exit;
+				return $this->_defaultResponse;
 			}
+			var_dump($response->data);exit;
+
 
 			//-- получаем обрабатываем
 			foreach ($request['data'] as &$item){
@@ -113,6 +104,19 @@ class RateController extends Controller
 
 			return $this->asJson($request);
 		}
+
+		public function actionConvert($method, $currency_from, $currency_to, $value){
+
+			$request = Yii::$app->request;
+
+			if($method != 'convert'){
+
+			}
+
+		}
+
+
+
 		public function actionExchange($currency_from = null, $currency_to = null, $value = null){
 			$value = floatval($value);
 			if(

@@ -1,5 +1,7 @@
 <?php
 
+use yii\web\UrlNormalizer;
+
 $params = require __DIR__ . '/params.php';
 $db = require __DIR__ . '/db.php';
 
@@ -7,11 +9,15 @@ $db = require __DIR__ . '/db.php';
 $config = [
     'id' => 'basic',
     'basePath' => dirname(__DIR__),
-    'bootstrap' => ['log'],
+    'bootstrap' => [
+//    	'log',
+			'api\modules\v1\Bootstrap'
+    ],
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
         '@npm'   => '@vendor/npm-asset',
 		    '@api' => dirname(__DIR__) . '/api',
+//	      '@modules' => dirname(__DIR__) . '/modules',
     ],
     'components' => [
         'request' => [
@@ -29,9 +35,9 @@ $config = [
             'enableAutoLogin' => true,
 	          'enableSession' => true
         ],
-        'errorHandler' => [
-            'errorAction' => 'v1/rate/error',
-        ],
+//        'errorHandler' => [
+//            'errorAction' => 'v1/rate/error',
+//        ],
         'mailer' => [
             'class' => 'yii\swiftmailer\Mailer',
             // send all mails to a file by default. You have to set
@@ -52,18 +58,23 @@ $config = [
         'urlManager' => [
             'enablePrettyUrl' => true,
 	          'enableStrictParsing' => true,
-            'showScriptName' => true,
+            'showScriptName' => false,
+		        'normalizer' => [
+			        'class' => 'yii\web\UrlNormalizer',
+			        'action' => UrlNormalizer::ACTION_REDIRECT_PERMANENT,
+		        ],
             'rules' => [
-		            [
-			            'class'       =>  'yii\rest\UrlRule',
-	                'controller'  => ['v1'],
-			            'prefix'  => 'api',
-			            'pluralize' => false,
-			            'extraPatterns' => [
-				            'GET /' => 'rate/index',
-				            'POST exchange' => 'rate/exchange',
-			            ],
-		            ],
+//		            [
+//			            'class'       =>  'yii\rest\UrlRule',
+//	                'controller'  => ['v1'],
+//			            'prefix'  => 'api',
+//			            'pluralize' => false,
+//			            'extraPatterns' => [
+//			            	'GET /' => '',
+//				            'GET /' => 'rate/index',
+//				            'POST exchange' => 'rate/exchange',
+//			            ],
+//		            ],
             ],
         ],
     ],
@@ -71,6 +82,9 @@ $config = [
 		    'v1' => [
 			    'class' => 'api\modules\v1\Module',
 		    ],
+				'product' => [
+					'class' => 'app\modules\product\Product',
+				]
 		],
     'params' => $params,
 ];

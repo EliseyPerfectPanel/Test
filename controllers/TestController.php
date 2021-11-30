@@ -9,8 +9,9 @@ use yii\web\Response;
 use yii\filters\VerbFilter;
 use app\models\LoginForm;
 use app\models\ContactForm;
+use yii\helpers\Url;
 
-class SiteController extends Controller
+class TestController extends Controller
 {
     /**
      * {@inheritdoc}
